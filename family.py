@@ -46,13 +46,22 @@ def search(q):
 
     query = lucene.QueryParser(lucene.Version.LUCENE_CURRENT,
                                'name', analyzer).parse(q)
-    score_docs = searcher.search(query, None, 20).scoreDocs
 
-    print 'Found %d hits:' % len(score_docs)
+    formatter = lucene.SimpleHTMLFormatter('<b>', '</b>')
+    scorer = lucene.QueryScorer(query)
+    highlighter = lucene.Highlighter(formatter, scorer)
+    highlighter.getTextFragmenter()
+
+    results = searcher.search(query, None, 20)
+    score_docs = results.scoreDocs
+    print 'Found %d hits:' % results.totalHits
+
     for score_doc in score_docs:
         doc = searcher.doc(score_doc.doc)
         score = score_doc.score
-        print '[%f]:  "%s"' % (score, doc.get('name'))
+        name = doc['name']
+        highlighted = highlighter.getBestFragment(analyzer, 'name', name)
+        print '[%f]:  "%s"' % (score, highlighted)
 
 
 if __name__ == '__main__':
